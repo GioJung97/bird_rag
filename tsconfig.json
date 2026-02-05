@@ -6,6 +6,12 @@
       "DOM.Iterable",
       "ES2020"
     ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,

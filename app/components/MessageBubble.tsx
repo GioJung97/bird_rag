@@ -50,11 +50,11 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
             {message.text}
           </p>
         )}
-        {message.image && (
+        {message.imageUrl && (
           <div className="mt-3 overflow-hidden rounded-xl border border-ink-200 bg-white dark:border-ink-700 dark:bg-ink-900">
             <img
-              src={message.image.dataUrl}
-              alt={message.image.name}
+              src={message.imageUrl}
+              alt={message.imageName ?? "Uploaded image"}
               className="max-h-64 w-full object-cover"
             />
           </div>

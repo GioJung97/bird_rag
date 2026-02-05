@@ -4,7 +4,13 @@ import { useEffect, useRef } from "react";
 import type { ChatMessage } from "../types/chat";
 import { MessageBubble } from "./MessageBubble";
 
-export function ChatWindow({ messages }: { messages: ChatMessage[] }) {
+export function ChatWindow({
+  messages,
+  isLoading
+}: {
+  messages: ChatMessage[];
+  isLoading?: boolean;
+}) {
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -15,7 +21,7 @@ export function ChatWindow({ messages }: { messages: ChatMessage[] }) {
     <div className="flex h-full flex-col gap-5 overflow-y-auto px-4 py-4">
       {messages.length === 0 ? (
         <div className="flex h-full items-center justify-center text-sm text-ink-400 dark:text-ink-500">
-          Start a conversation.
+          {isLoading ? "Loading conversation..." : "Start a conversation."}
         </div>
       ) : (
         messages.map((message) => (

@@ -2,12 +2,13 @@
 
 import type { ChangeEvent, KeyboardEvent } from "react";
 import { useRef } from "react";
-import type { ChatImage } from "../types/chat";
+import type { ComposerImage } from "../types/chat";
 
 type ComposerProps = {
   value: string;
-  image?: ChatImage;
+  image?: ComposerImage;
   error?: string;
+  isSending?: boolean;
   onValueChange: (value: string) => void;
   onImageSelected: (file: File) => void;
   onRemoveImage: () => void;
@@ -18,6 +19,7 @@ export function Composer({
   value,
   image,
   error,
+  isSending,
   onValueChange,
   onImageSelected,
   onRemoveImage,
@@ -28,7 +30,9 @@ export function Composer({
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      onSend();
+      if (!isSending) {
+        onSend();
+      }
     }
   };
 
@@ -86,7 +90,8 @@ export function Composer({
               onKeyDown={handleKeyDown}
               rows={3}
               placeholder="Type a message..."
-              className="w-full resize-none rounded-3xl border border-ink-200 bg-white px-12 py-4 text-sm text-ink-900 shadow-sm focus:border-ink-400 focus:outline-none dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"              aria-label="Message input"
+              className="w-full resize-none rounded-3xl border border-ink-200 bg-white px-12 py-4 text-sm text-ink-900 shadow-sm focus:border-ink-400 focus:outline-none dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
+              aria-label="Message input"
             />
           </div>
           <button
@@ -94,12 +99,14 @@ export function Composer({
             onClick={onSend}
             className="self-center rounded-2xl bg-ink-900 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-ink-800 disabled:cursor-not-allowed disabled:bg-ink-300 dark:bg-ink-50 dark:text-ink-900 dark:hover:bg-ink-200 dark:disabled:bg-ink-700"
             aria-label="Send message"
-            disabled={value.trim().length === 0 && !image}
+            disabled={isSending || (value.trim().length === 0 && !image)}
           >
-            Send
+            {isSending ? "Sending" : "Send"}
           </button>
         </div>
-        {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+        {error && (
+          <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+        )}
       </div>
     </div>
   );

@@ -4,8 +4,8 @@ import { formatTimestamp } from "../lib/formatTimestamp";
 
 const roleStyles: Record<ChatMessage["role"], string> = {
   user:
-    "bg-neutral-100 text-neutral-900 ml-auto border border-neutral-300 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-700",
-  assistant: "text-ink-900 mr-auto -ml-3 dark:text-ink-50"
+    "bg-neutral-100 text-neutral-900 ml-auto mr-2 border border-neutral-300 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-700",
+  assistant: "text-ink-900 mr-auto ml-0 dark:text-ink-50"
 };
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
@@ -59,11 +59,48 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
             />
           </div>
         )}
+        {message.role === "assistant" &&
+          message.citations &&
+          message.citations.length > 0 && (
+            <div className="mt-4 rounded-xl border border-ink-200 bg-white/70 p-3 text-xs text-ink-700 dark:border-ink-700 dark:bg-ink-900/70 dark:text-ink-200">
+              <p className="font-semibold text-ink-900 dark:text-ink-50">
+                Sources
+              </p>
+              <div className="mt-2 flex flex-col gap-2">
+                {message.citations.map((citation, index) => (
+                  <div
+                    key={citation.id ?? `${message.id}-citation-${index}`}
+                    className="flex flex-col gap-1"
+                  >
+                    {citation.url ? (
+                      <a
+                        href={citation.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-ink-900 underline underline-offset-2 hover:text-ink-600 dark:text-ink-50 dark:hover:text-ink-200"
+                      >
+                        {index + 1}. {citation.title}
+                      </a>
+                    ) : (
+                      <p className="text-ink-900 dark:text-ink-50">
+                        {index + 1}. {citation.title}
+                      </p>
+                    )}
+                    {citation.snippet && (
+                      <p className="text-ink-600 dark:text-ink-300">
+                        {citation.snippet}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
       </div>
       <div
         className={
           "flex items-center gap-3 text-xs text-ink-500 dark:text-ink-400 " +
-          (message.role === "user" ? "ml-auto" : "mr-auto, -mt-2")
+          (message.role === "user" ? "ml-auto" : "mr-auto -mt-2 ml-5")
         }
       >
         <span className="sr-only">{formatTimestamp(message.createdAt)}</span>

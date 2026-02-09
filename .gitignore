@@ -12,3 +12,7 @@ yarn-error.log*
 pnpm-debug.log*
 data/
 uploads/
+.venv/
+__pycache__/
+*.pyc
+*.log

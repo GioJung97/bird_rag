@@ -15,6 +15,7 @@ export const messages = sqliteTable("messages", {
   text: text("text"),
   imagePath: text("image_path"),
   imageName: text("image_name"),
+  citationsJson: text("citations_json"),
   createdAt: integer("created_at").notNull()
 });
 

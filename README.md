@@ -99,6 +99,24 @@ uvicorn scripts.retrieval_server:app --reload --port 8081
 curl "http://localhost:8081/search?q=habitat%20of%20owl&k=5"
 ```
 
+### Next.js + Retrieval (Citations)
+
+Run the retrieval server before starting the Next.js app if you want citations in chat responses.
+
+```bash
+uvicorn scripts.retrieval_server:app --reload --port 8081
+npm run dev
+```
+
+If the retrieval server is offline or the FAISS index is missing, `/api/chat` will still work but will respond with a retrieval-offline stub.
+
+### Env
+
+```
+RETRIEVAL_URL=http://localhost:8081
+RETRIEVAL_K=5
+```
+
 ### Data layout (expected)
 
 - `qids/` tracked QID lists

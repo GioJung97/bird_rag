@@ -12,6 +12,7 @@ export type ChatMessage = {
   text: string | null;
   imageUrl?: string;
   imageName?: string | null;
+  citations?: Citation[];
   createdAt: number;
 };
 
@@ -35,4 +36,12 @@ export type ConversationSummary = {
 
 export type ConversationsResponse = {
   conversations: ConversationSummary[];
+};
+
+export type Citation = {
+  id: string;
+  title: string;
+  url?: string;
+  snippet: string;
+  score?: number;
 };

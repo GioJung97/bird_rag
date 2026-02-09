@@ -1,14 +1,34 @@
 import type { Message } from "../db/schema";
 import { getImageUrl } from "./uploads";
 
+export type Citation = {
+  id: string;
+  title: string;
+  url?: string;
+  snippet: string;
+  score?: number;
+};
+
 export type MessageDTO = {
   id: string;
   role: "user" | "assistant";
   text: string | null;
   imageUrl?: string;
   imageName?: string | null;
+  citations?: Citation[];
   createdAt: number;
 };
+
+function parseCitations(raw: string | null | undefined): Citation[] | undefined {
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return undefined;
+    return parsed.filter((item) => item && typeof item === "object");
+  } catch {
+    return undefined;
+  }
+}
 
 export function toMessageDTO(message: Message): MessageDTO {
   return {
@@ -17,6 +37,7 @@ export function toMessageDTO(message: Message): MessageDTO {
     text: message.text ?? null,
     imageUrl: message.imagePath ? getImageUrl(message.imagePath) : undefined,
     imageName: message.imageName ?? null,
+    citations: message.citationsJson ? parseCitations(message.citationsJson) : undefined,
     createdAt: message.createdAt
   };
 }

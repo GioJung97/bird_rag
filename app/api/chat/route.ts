@@ -3,10 +3,40 @@ import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "@/src/db";
 import { conversations, messages } from "@/src/db/schema";
-import { buildStubAssistantReply, toMessageDTO } from "@/src/lib/chat";
+import { toMessageDTO } from "@/src/lib/chat";
+import { search } from "@/src/lib/retrieval";
 import { saveUploadedImage, validateImageFile } from "@/src/lib/uploads";
 
 export const runtime = "nodejs";
+
+function buildRetrievalReply({
+  contextText,
+  citationsText,
+  offlineMessage,
+  usedFallbackQuery
+}: {
+  contextText: string;
+  citationsText: string;
+  offlineMessage: string;
+  usedFallbackQuery: boolean;
+}) {
+  if (offlineMessage) {
+    return `${offlineMessage} (retrieval stub)`;
+  }
+
+  if (!contextText) {
+    const note = usedFallbackQuery
+      ? " I used a generic query because no text was provided."
+      : "";
+    return `I couldn't find relevant sources in the local index yet. (retrieval stub)${note}`;
+  }
+
+  const note = usedFallbackQuery
+    ? "\n\nNote: I used a generic query because no text was provided."
+    : "";
+
+  return `Here are relevant sources I found:\n\nSummary (from retrieved text):\n${contextText}\n\n${citationsText}${note}`;
+}
 
 export async function POST(request: Request) {
   let formData: FormData;
@@ -80,8 +110,30 @@ export async function POST(request: Request) {
     createdAt
   });
 
-  // TODO: Replace this stub with the VLM + RAG pipeline.
-  const assistantText = buildStubAssistantReply(text, savedImageName);
+  const retrievalK = Number(process.env.RETRIEVAL_K ?? "5") || 5;
+  const usedFallbackQuery = !text.trim() && Boolean(savedImageName);
+  const retrievalQuery = text.trim() ? text : "bird";
+
+  const { citations, contextText, offlineMessage } = await search(
+    retrievalQuery,
+    retrievalK
+  );
+
+  const citationsText = citations
+    .map((citation, index) => {
+      const title = citation.title || "Untitled source";
+      const snippet = citation.snippet ? ` - ${citation.snippet}` : "";
+      return `[${index + 1}] ${title}${snippet}`;
+    })
+    .join("\n");
+
+  // TODO: Replace this retrieval-grounded stub with the LLM + RAG pipeline.
+  const assistantText = buildRetrievalReply({
+    contextText,
+    citationsText,
+    offlineMessage,
+    usedFallbackQuery
+  });
   const assistantMessageId = randomUUID();
   const assistantCreatedAt = Date.now();
 
@@ -92,6 +144,7 @@ export async function POST(request: Request) {
     text: assistantText,
     imagePath: null,
     imageName: null,
+    citationsJson: citations.length > 0 ? JSON.stringify(citations) : null,
     createdAt: assistantCreatedAt
   });
 

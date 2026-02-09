@@ -157,7 +157,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-ink-50 transition-colors duration-200 ease-out dark:bg-ink-900">
-      <header className="border-b border-ink-200 bg-white px-6 py-4 dark:border-ink-800 dark:bg-ink-900">
+      <header className="fixed inset-x-0 top-0 z-30 border-b border-ink-200 bg-white px-6 py-4 dark:border-ink-800 dark:bg-ink-900">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between">
           <div className="flex items-center gap-3">
             <button
@@ -182,7 +182,7 @@ export default function ChatPage() {
           <ThemeToggle />
         </div>
       </header>
-      <main className="flex flex-1 flex-col">
+      <main className="flex flex-1 flex-col pt-16">
         <div className="mx-auto flex h-full w-full max-w-5xl flex-1 flex-col">
           {hasMessages ? (
             <>

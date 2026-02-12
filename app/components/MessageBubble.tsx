@@ -39,15 +39,29 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
     <div className="flex w-full flex-col gap-2">
       <div
         className={
-          "max-w-[80%] rounded-2xl px-4 py-3 " + roleStyles[message.role]
+          "max-w-[80%] rounded-2xl px-4 py-3 " +
+          roleStyles[message.role] +
+          (message.isPending ? " opacity-70" : "")
         }
         aria-label={
           message.role === "user" ? "User message" : "Assistant message"
         }
       >
         {message.text && (
-          <p className="whitespace-pre-wrap text-sm leading-6">
-            {message.text}
+          <p
+            className={
+              "whitespace-pre-wrap text-sm leading-6 " +
+              (message.isPending ? "text-ink-500 dark:text-ink-400" : "")
+            }
+          >
+            {message.isPending ? (
+              <>
+                Loading<span className="loading-dots" aria-hidden />
+                <span className="sr-only">Loading...</span>
+              </>
+            ) : (
+              message.text
+            )}
           </p>
         )}
         {message.imageUrl && (
@@ -104,7 +118,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
         }
       >
         <span className="sr-only">{formatTimestamp(message.createdAt)}</span>
-        {message.role === "assistant" && message.text && (
+        {message.role === "assistant" && message.text && !message.isPending && (
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -117,7 +131,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
                 aria-hidden
                 viewBox="0 0 24 24"
                 className="h-6 w-6"
-                fill={copied ? "#000000" : "none"}
+                fill={copied ? "currentColor" : "none"}
                 stroke="currentColor"
                 strokeWidth="1.8"
                 strokeLinecap="round"

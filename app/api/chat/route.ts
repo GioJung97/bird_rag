@@ -6,10 +6,40 @@ import { conversations, messages } from "@/src/db/schema";
 import { toMessageDTO } from "@/src/lib/chat";
 import { search } from "@/src/lib/retrieval";
 import { saveUploadedImage, validateImageFile } from "@/src/lib/uploads";
+import { chatWithLlama } from "@/src/lib/llama";
 
 export const runtime = "nodejs";
 
 function buildRetrievalReply({
+  contextText,
+  citationsText,
+  offlineMessage,
+  usedFallbackQuery
+}: {
+  contextText: string;
+  citationsText: string;
+  offlineMessage: string;
+  usedFallbackQuery: boolean;
+}) {
+  if (offlineMessage) {
+    return `Retrieval is offline. Use general knowledge and respond helpfully. (${offlineMessage})`;
+  }
+
+  if (!contextText) {
+    const note = usedFallbackQuery
+      ? " I used a generic query because no text was provided."
+      : "";
+    return `No relevant sources were found in the local index. Respond using general knowledge.${note}`;
+  }
+
+  const note = usedFallbackQuery
+    ? "\n\nNote: I used a generic query because no text was provided."
+    : "";
+
+  return `Use the following retrieved context to answer the user. If you use a source, cite it inline like [1].\n\nContext:\n${contextText}\n\nSources:\n${citationsText}${note}`;
+}
+
+function buildRetrievalStub({
   contextText,
   citationsText,
   offlineMessage,
@@ -127,13 +157,40 @@ export async function POST(request: Request) {
     })
     .join("\n");
 
-  // TODO: Replace this retrieval-grounded stub with the LLM + RAG pipeline.
-  const assistantText = buildRetrievalReply({
-    contextText,
-    citationsText,
-    offlineMessage,
-    usedFallbackQuery
-  });
+  let assistantText: string;
+  try {
+    const systemPrompt = buildRetrievalReply({
+      contextText,
+      citationsText,
+      offlineMessage,
+      usedFallbackQuery
+    });
+
+    assistantText = await chatWithLlama({
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt
+        },
+        {
+          role: "user",
+          content: text || "Please describe the image."
+        }
+      ],
+      maxTokens: Number(process.env.LLAMA_MAX_TOKENS ?? "512") || 512,
+      temperature: Number(process.env.LLAMA_TEMPERATURE ?? "0.4") || 0.4
+    });
+  } catch (error) {
+    const fallback = buildRetrievalStub({
+      contextText,
+      citationsText,
+      offlineMessage,
+      usedFallbackQuery
+    });
+    assistantText = `${fallback}\n\n(LLM fallback: ${
+      error instanceof Error ? error.message : "Unknown error"
+    })`;
+  }
   const assistantMessageId = randomUUID();
   const assistantCreatedAt = Date.now();
 

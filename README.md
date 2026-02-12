@@ -115,6 +115,10 @@ If the retrieval server is offline or the FAISS index is missing, `/api/chat` wi
 ```
 RETRIEVAL_URL=http://localhost:8081
 RETRIEVAL_K=5
+LLAMA_BASE_URL=http://127.0.0.1:8082
+LLAMA_MODEL=Meta-Llama-3.1-8B-Instruct-IQ2_M.gguf
+LLAMA_MAX_TOKENS=512
+LLAMA_TEMPERATURE=0.4
 ```
 
 ### Data layout (expected)

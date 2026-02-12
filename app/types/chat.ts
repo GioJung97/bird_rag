@@ -14,6 +14,7 @@ export type ChatMessage = {
   imageName?: string | null;
   citations?: Citation[];
   createdAt: number;
+  isPending?: boolean;
 };
 
 export type ChatResponse = {

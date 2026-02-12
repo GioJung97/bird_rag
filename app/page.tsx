@@ -103,6 +103,33 @@ export default function ChatPage() {
     }
 
     const trimmed = value.trim();
+    const now = Date.now();
+    const tempUserId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `user-${now}`;
+    const tempAssistantId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `assistant-${now}`;
+
+    const optimisticUser: ChatMessage = {
+      id: tempUserId,
+      role: "user",
+      text: trimmed || null,
+      imageUrl: image?.dataUrl,
+      imageName: image?.name ?? null,
+      createdAt: now
+    };
+
+    const optimisticAssistant: ChatMessage = {
+      id: tempAssistantId,
+      role: "assistant",
+      text: "Loading...",
+      createdAt: now + 1,
+      isPending: true
+    };
+
     const formData = new FormData();
     if (trimmed) {
       formData.append("text", trimmed);
@@ -116,6 +143,9 @@ export default function ChatPage() {
 
     setIsSending(true);
     setError(undefined);
+    setMessages((prev) => [...prev, optimisticUser, optimisticAssistant]);
+    setValue("");
+    setImage(undefined);
 
     try {
       const response = await fetch("/api/chat", {
@@ -126,17 +156,61 @@ export default function ChatPage() {
       if (!response.ok) {
         const body = await response.json().catch(() => null);
         setError(body?.error ?? "Failed to send message.");
+        setMessages((prev) =>
+          prev.map((message) => {
+            if (message.id === tempAssistantId) {
+              return {
+                ...message,
+                text: "There was an error generating a response. Please try again.",
+                isPending: false
+              };
+            }
+            return message;
+          })
+        );
         return;
       }
 
       const data = (await response.json()) as ChatResponse;
       setConversationId(data.conversationId);
-      setMessages((prev) => [...prev, data.userMessage, data.assistantMessage]);
-      setValue("");
-      setImage(undefined);
+      setMessages((prev) => {
+        let replacedUser = false;
+        let replacedAssistant = false;
+        const next = prev.map((message) => {
+          if (message.id === tempUserId) {
+            replacedUser = true;
+            return data.userMessage;
+          }
+          if (message.id === tempAssistantId) {
+            replacedAssistant = true;
+            return data.assistantMessage;
+          }
+          return message;
+        });
+
+        if (!replacedUser) {
+          next.push(data.userMessage);
+        }
+        if (!replacedAssistant) {
+          next.push(data.assistantMessage);
+        }
+        return next;
+      });
       void loadConversations();
     } catch (err) {
       setError("Failed to send message.");
+      setMessages((prev) =>
+        prev.map((message) => {
+          if (message.id === tempAssistantId) {
+            return {
+              ...message,
+              text: "There was an error generating a response. Please try again.",
+              isPending: false
+            };
+          }
+          return message;
+        })
+      );
     } finally {
       setIsSending(false);
     }
@@ -182,11 +256,11 @@ export default function ChatPage() {
           <ThemeToggle />
         </div>
       </header>
-      <main className="flex flex-1 flex-col pt-16">
-        <div className="mx-auto flex h-full w-full max-w-5xl flex-1 flex-col">
+      <main className="flex min-h-0 flex-1 flex-col pt-16">
+        <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col">
           {hasMessages ? (
             <>
-              <div className="flex-1">
+              <div className="flex min-h-0 flex-1">
                 <ChatWindow messages={messages} isLoading={isLoading} />
               </div>
               <div className="transition-transform duration-800 ease-out translate-y-0">

@@ -16,3 +16,7 @@ uploads/
 __pycache__/
 *.pyc
 *.log
+.llama.cpp/
+models/
+*.gguf
+models/.cache/
